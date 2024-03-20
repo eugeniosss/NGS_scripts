@@ -11,4 +11,4 @@ dependencies:
   - htsbox=r346=h5bf99c6_1
   - samtools=1.19
   - picard =2.27.5
-  - circularmapper=v1.93.5
+  - circularmapper=1.93.5=h4a94de4_1
