@@ -340,7 +340,7 @@ rule get_fastas:
     log:
         FASTAS+"/{SAMPLE}.log",
     params:
-        extra="-l30 -q30 -Q30 -s3 -e -M",
+        extra="-l30 -q30 -Q30 -s5 -e -M",
     # optional specification of memory usage of the JVM that snakemake will respect with global
     # resource restrictions (https://snakemake.readthedocs.io/en/latest/snakefiles/rules.html#resources)
     # and which can be used to request RAM during cluster job submission as `{resources.mem_mb}`:
