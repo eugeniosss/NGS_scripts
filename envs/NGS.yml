@@ -1,0 +1,14 @@
+name: NGS
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - adapterremoval=2.3.2=h33c0355_1
+  - adapterremovalfixprefix=0.0.5=hdfd78af_2
+  - bwa=0.7.17=h7132678_9
+  - circularmapper=1.93.5=h4a94de4_1
+  - htsbox=r346=h5bf99c6_1
+  - samtools=1.19
+  - picard =2.27.5
+  - circularmapper=v1.93.5
