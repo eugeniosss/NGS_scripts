@@ -1,15 +1,13 @@
 DIC_FILE="dic.txt"
 AR="processed_A"
-REF_CIR="/media/jbod2/eugenio/ref_genomes/L.europaeus_AJ421471_500.fasta"
-REF="/media/jbod2/eugenio/ref_genomes/L.europaeus_AJ421471.fasta"
+REF="/media/jbod2/eugenio/ref_genomes/ncbi_dataset/data/GCF_033115175.1/GCF_033115175.1_mLepTim1.pri_genomic.fna"
 BAMS_UN="bams_genome_mem_u"
 BAMS_UN_PIC="bams_genome_mem_u_pic"
 BAMS="bams_genome_mem"
 BAMS_PIC="bams_genome_mem_pic"
 FASTAS="fastas_MT"
 STATS="stats"
-NU_BED="/data/arch-ferrets/refs/IRN10000035363_Ocun_31Oct2019_primary_targets_clean_No_X_MT.bed"
-MT_BED="/media/jbod2/eugenio/ref_genomes/genome_L.europaeus_MIT.bed"
+MT_BED="/media/jbod2/eugenio/ref_genomes/ncbi_dataset/data/GCF_033115175.1/GCF_033115175.1_mLepTim1.pri_genomic_MT.bed"
 NGS_SCRIPTS="/media/jbod2/eugenio/NGS_scripts/"
 
 import csv
@@ -39,6 +37,38 @@ rule all:
            "metrics_libs.csv",
            [BAMS_PIC+"/{SAMPLE}.bam".format(SAMPLE=SAMPLE) for SAMPLE in DIC_MERGE.keys()],
            "metrics_samples.csv",
+
+
+
+### INDEX REF ###
+
+os.path.splitext(REF)
+REF_RAW=os.path.splitext(REF)[0]
+REF_EXT=os.path.splitext(REF)[1]
+
+rule generate_circualr_ref:
+    input:
+        REF
+    output:
+        REF_RAW+"_500"+REF_EXT
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    shell:
+        "circulargenerator -e 500 -i {input} -s 'MT'"
+
+rule bwa_index:
+    input:
+        REF_RAW+"_500"+REF_EXT,
+    output:
+        idx=multiext(REF_RAW+"_500"+REF_EXT, ".amb", ".ann", ".bwt", ".pac", ".sa"),
+    log:
+        "bwa_index/indexing_500.log",
+    params:
+        extra="",
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_bwa_index.py"
+
+###
 
 rule adapterremoval_pe:
     input:
@@ -72,7 +102,7 @@ rule combine_pe:
 rule bwa_aln:
     input:
         fastq=AR+"/{SAMPLE}_{LA}_{DATE}.combined.gz",
-        idx=multiext(REF_CIR, ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=multiext(REF_RAW+"_500"+REF_EXT, ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "tmp_{SAMPLE}_{LA}_{DATE}/{SAMPLE}_{LA}_{DATE}.sai",
     conda:
@@ -81,7 +111,7 @@ rule bwa_aln:
         extra="-l 1024 -o 2 -n 0.01",
     log:
         BAMS_UN+"/{SAMPLE}_{LA}_{DATE}_mapping.log",
-    threads: 47
+    threads: 29
     script:
         NGS_SCRIPTS+"scripts_snake/run_bwa_aln.py"
 
@@ -89,7 +119,7 @@ rule bwa_sam:
     input:
         fastq=AR+"/{SAMPLE}_{LA}_{DATE}.combined.gz",
         sai="tmp_{SAMPLE}_{LA}_{DATE}/{SAMPLE}_{LA}_{DATE}.sai",
-        idx=multiext(REF_CIR, ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=multiext(REF_RAW+"_500"+REF_EXT, ".amb", ".ann", ".bwt", ".pac", ".sa"),
     output:
         "tmp_{SAMPLE}_{LA}_{DATE}/{SAMPLE}_{LA}_{DATE}.bam",
     params:
