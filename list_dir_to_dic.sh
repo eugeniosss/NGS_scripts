@@ -36,14 +36,13 @@ declare -A file_dict
 for file in *; do
     # Extract pattern from filename
     pattern=$(echo "$file" | awk -F '_' '{print $1"_"$2"_"$3}')
-    # Append file to array element corresponding to its pattern
-    file_dict["$pattern"]+="$file "
+    # Append full path of the file to array element corresponding to its pattern
+    file_dict["$pattern"]+="$directory$file "
 done
 
-# Write the pattern and associated files to the output file
+# Write the pattern and associated files (with full paths) to the output file
 for pattern in "${!file_dict[@]}"; do
     echo "$pattern,${file_dict[$pattern]}"
 done > "$output_file"
 
 echo "Files listed in pattern and saved to $output_file."
-
