@@ -68,6 +68,18 @@ rule bwa_index:
     script:
         NGS_SCRIPTS+"scripts_snake/run_bwa_index.py"
 
+rule create_dic:
+    input:
+        REF_RAW+REF_EXT,
+    output:
+        REF_RAW+".dict",
+    log:
+        "bwa_index/create_diclog",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    shell:
+        "picard CreateSequenceDictionary R={input} O={output} > {log} 2>&1"
+
 ###
 
 rule adapterremoval_pe:
@@ -244,6 +256,7 @@ rule get_coverage_MT:
         fasta=REF,
         intervals=MT_BED,
         bai=BAMS_UN_PIC+"/{SEQ}.bam.bai",
+        dic=REF_RAW+".dict",
     output:
         multiext(
             "stats/{SEQ}_MT",
@@ -386,6 +399,7 @@ rule gatk3_coverage_MT_sample:
         fasta=REF,
         intervals=MT_BED,
         bai=BAMS_PIC+"/{SAMPLE}.bam.bai",
+        dic=REF_RAW+".dict",
     output:
         file="stats/{SAMPLE}_MT",
         coverage_counts="stats/{SAMPLE}_MT.sample_cumulative_coverage_counts",
