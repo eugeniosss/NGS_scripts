@@ -1,14 +1,14 @@
 DIC_FILE="dic.txt"
 AR="processed_A"
-REF="/media/jbod2/eugenio/ref_genomes/ncbi_dataset/data/GCF_033115175.1/GCF_033115175.1_mLepTim1.pri_genomic.fna"
+REF="/data/arch-ferrets/refs/GCF_033115175.1_mLepTim1.pri_genomic.fna"
 BAMS_UN="bams_genome_mem_u"
 BAMS_UN_PIC="bams_genome_mem_u_pic"
 BAMS="bams_genome_mem"
 BAMS_PIC="bams_genome_mem_pic"
 FASTAS="fastas_MT"
 STATS="stats"
-MT_BED="/media/jbod2/eugenio/ref_genomes/ncbi_dataset/data/GCF_033115175.1/GCF_033115175.1_mLepTim1.pri_genomic_MT.bed"
-NGS_SCRIPTS="/media/jbod2/eugenio/NGS_scripts/"
+MT_BED="/data/arch-ferrets/refs/GCF_033115175.1_mLepTim1.pri_genomic_MT.bed"
+NGS_SCRIPTS="/data/arch-ferrets/arch0580/NGS_scripts/"
 
 import csv
 import re
@@ -53,7 +53,7 @@ rule generate_circualr_ref:
         REF_RAW+"_500"+REF_EXT
     conda:
         NGS_SCRIPTS+"envs/NGS.yml"
-    shell:
+    shell:	
         "circulargenerator -e 500 -i {input} -s 'MT'"
 
 rule bwa_index:
@@ -63,6 +63,8 @@ rule bwa_index:
         idx=multiext(REF_RAW+"_500"+REF_EXT, ".amb", ".ann", ".bwt", ".pac", ".sa"),
     log:
         "bwa_index/indexing_500.log",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
     params:
         extra="",
     script:
@@ -123,7 +125,7 @@ rule bwa_aln:
         extra="-l 1024 -o 2 -n 0.01",
     log:
         BAMS_UN+"/{SAMPLE}_{LA}_{DATE}_mapping.log",
-    threads: 29
+    threads: 23
     script:
         NGS_SCRIPTS+"scripts_snake/run_bwa_aln.py"
 
@@ -206,7 +208,7 @@ rule samtools_index_libs:
         extra="",  # optional params string
     threads: 1  # This value - 1 will be sent to -@
     conda:
-        NGS_SCRIPTS+"envs/samtools.yml"
+        NGS_SCRIPTS+"envs/NGS.yml"
     script:
         NGS_SCRIPTS+"scripts_snake/run_samtools_index.py"
 
@@ -217,7 +219,7 @@ rule get_stats_libs:
     output:
         STATS+"/{SEQ}_basic_stats.txt",
     conda:
-        NGS_SCRIPTS+"envs/samtools.yml"
+        NGS_SCRIPTS+"envs/NGS.yml"
     params:
         bed="False"
     log:
@@ -366,7 +368,7 @@ rule samtools_index_samples:
         extra="",  # optional params string
     threads: 1  # This value - 1 will be sent to -@
     conda:
-        NGS_SCRIPTS+"envs/samtools.yml"
+        NGS_SCRIPTS+"envs/NGS.yml"
     script:
         NGS_SCRIPTS+"scripts_snake/run_samtools_index.py"
 
@@ -427,7 +429,7 @@ rule get_stats_samples:
     output:
         STATS+"/{SAMPLE}_basic_stats.txt",
     conda:
-        NGS_SCRIPTS+"envs/samtools.yml"
+        NGS_SCRIPTS+"envs/NGS.yml"
     params:
         bed="False"
     log:
