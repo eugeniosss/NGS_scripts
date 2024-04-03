@@ -1,13 +1,13 @@
 DIC_FILE="dic.txt"
 AR="processed_A"
-REF="/data/arch-ferrets/refs/GCF_033115175.1_mLepTim1.pri_genomic.fna"
+REF="/data/arch-ferrets/refs/genome_L.tim_GCA_009760805.1_MT_euro_AJ421471.fasta"
 BAMS_UN="bams_genome_mem_u"
 BAMS_UN_PIC="bams_genome_mem_u_pic"
 BAMS="bams_genome_mem"
 BAMS_PIC="bams_genome_mem_pic"
 FASTAS="fastas_MT"
 STATS="stats"
-MT_BED="/data/arch-ferrets/refs/GCF_033115175.1_mLepTim1.pri_genomic_MT.bed"
+MT_BED="/data/arch-ferrets/refs/genome_L.tim_GCA_009760805.1_MT_euro_AJ421471_MT.bed"
 NGS_SCRIPTS="/data/arch-ferrets/arch0580/NGS_scripts/"
 
 import csv
@@ -97,7 +97,7 @@ rule adapterremoval_pe:
         AR+"/{SEQ}.log"
     params:
         adapters="",
-        extra="--collapse --trimns --trimqualities --minlength 30 --preserve5p"
+        extra="--collapse --trimns --trimqualities --preserve5p"
     conda:
         NGS_SCRIPTS+"envs/NGS.yml"
     threads: 2
