@@ -12,3 +12,4 @@ dependencies:
   - samtools=1.19
   - picard =2.27.5
   - circularmapper=1.93.5=h4a94de4_1
+  - preseq=3.2.0

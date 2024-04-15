@@ -14,6 +14,7 @@ if snakemake.params.settings !="False":
           "&& echo Reads_length_average >> {snakemake.params.tmp} ")
     count_cols+=4
 
+
 shell(
     "echo Duplicates  >> {snakemake.params.tmp} " 
     "&& echo Duplicates_\(\%\)  >> {snakemake.params.tmp} "
