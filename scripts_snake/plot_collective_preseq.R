@@ -24,7 +24,7 @@ fig <- plot_ly(data = data2, x = ~TOTAL_READS, y = ~Value, color = ~RUN, type = 
   layout(
     xaxis = list(
       title = "Number of raw reads",
-      range = c(0, 10000000)
+      range = c(0, 100000000)
     ),
     yaxis = list(
       title = "Number of reads"

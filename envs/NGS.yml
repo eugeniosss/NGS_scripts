@@ -13,3 +13,4 @@ dependencies:
   - picard =2.27.5
   - circularmapper=1.93.5=h4a94de4_1
   - preseq=3.2.0
+  - bedtools=2.31.1

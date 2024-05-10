@@ -8,7 +8,7 @@ shell("echo ID >> {snakemake.params.tmp} ")
 count_cols=1
 
 if snakemake.params.settings !="False":
-    shell("echo Raw_Reads >> {snakemake.params.tmp} "
+    shell("echo Raw_Paired_Reads >> {snakemake.params.tmp} "
           "&& echo Reads_surviving_trimming >> {snakemake.params.tmp} "
           "&& echo Merged_reads >> {snakemake.params.tmp} "
           "&& echo Reads_length_average >> {snakemake.params.tmp} ")

@@ -31,7 +31,7 @@ create_plot <- function(input_file, output_file, log_file) {
     add_trace(data = subset(data2, condition == "distinct_reads"), y = ~Value, mode = 'lines', 
               opacity = 1, name = "Unique", line = list(color = 'blue')) %>%
     layout(
-      xaxis = list(title = "Number of raw reads", range = c(0, 20000000)),
+      xaxis = list(title = "Number of raw reads", range = c(0, 100000000)),
       yaxis = list(title = "Number of reads")
     )
   
