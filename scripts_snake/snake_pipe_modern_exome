@@ -1,0 +1,460 @@
+DIC_FILE="dic.txt"
+AR="processed_A"
+REF="/data/arch-ferrets/refs/Oryctolagus_cuniculus.OryCun2.0.dna.toplevel_hard_mask.fa"
+BAMS_UN="bams_genome_mem_u"
+BAMS_UN_PIC="bams_genome_mem_u_pic"
+BAMS="bams_genome_mem"
+BAMS_PIC="bams_genome_mem_pic"
+FASTAS="fastas_MT"
+STATS="stats"
+MT_BED="/data/arch-ferrets/refs/Oryctolagus_cuniculus.OryCun2.0.dna.toplevel_MT.bed"
+NU_BED="/data/arch-ferrets/refs/IRN10000035363_Ocun_31Oct2019_primary_targets_clean_No_X_MT.bed"
+NGS_SCRIPTS="/data/arch-ferrets/arch0580/NGS_scripts/"
+
+import csv
+import re
+
+
+csvfile = csv.reader(open(DIC_FILE))
+DIC = dict(csvfile)
+
+DIC_MERGE=dict()
+
+for SEQ in DIC.keys():
+    SAMPLE=SEQ.split("_")[0]
+    if SAMPLE in DIC_MERGE.keys():
+        if SEQ not in DIC_MERGE[SAMPLE]:
+            DIC_MERGE[SAMPLE]=DIC_MERGE[SAMPLE]+" "+BAMS_UN_PIC+"/"+SEQ+".bam"
+    else:
+        DIC_MERGE[SAMPLE]=BAMS_UN_PIC+"/"+SEQ+".bam"
+
+wildcard_constraints:
+    SAMPLE=".{4,9}",
+    SEQ=".{18,26}"
+        
+rule all:
+    input:
+           [BAMS_UN_PIC+"/{SEQ}.bam".format(SEQ=SEQ) for SEQ in DIC.keys()],
+           "metrics_libs.csv",
+           #[BAMS_PIC+"/{SAMPLE}.bam".format(SAMPLE=SAMPLE) for SAMPLE in DIC_MERGE.keys()],
+           #"metrics_samples.csv",
+
+
+
+### INDEX REF ###
+
+os.path.splitext(REF)
+REF_RAW=os.path.splitext(REF)[0]
+REF_EXT=os.path.splitext(REF)[1]
+
+rule bwa_index:
+    input:
+        REF_RAW+REF_EXT,
+    output:
+        idx=multiext(REF_RAW+REF_EXT, ".amb", ".ann", ".bwt", ".pac", ".sa"),
+    log:
+        "bwa_index/indexing.log",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    params:
+        extra="",
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_bwa_index.py"
+
+rule create_dic:
+    input:
+        REF_RAW+REF_EXT,
+    output:
+        REF_RAW+".dict",
+    log:
+        "bwa_index/create_diclog",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    shell:
+        "picard CreateSequenceDictionary R={input} O={output} > {log} 2>&1"
+
+###
+
+rule bwa_mem:
+    input:
+        reads=lambda wildcards: DIC[wildcards.SEQ].split(),
+        idx=multiext(REF, ".amb", ".ann", ".bwt", ".pac", ".sa")
+    output:
+        temporary("tmp_{SEQ}/{SEQ}.bam")
+    log:
+        BAMS_UN + "/{SEQ}_map.log"
+    conda:
+        NGS_SCRIPTS + "envs/NGS.yml"
+    params:
+        extra=lambda wildcards: "-R '@RG\\tID:{}\\tSM:{}\\tLB:{}'".format(
+            wildcards.SEQ.split('_')[0] + "_" + wildcards.SEQ.split('_')[1] + "_" + wildcards.SEQ.split('_')[2],
+            wildcards.SEQ.split('_')[0],
+            wildcards.SEQ.split('_')[0] + "_" + wildcards.SEQ.split('_')[1]
+        ),
+        sort_order="queryname",  # Can be 'queryname' or 'coordinate'.
+        sort_extra=""  # Extra args for samtools/picard.
+    threads: 23    
+    script:
+        NGS_SCRIPTS + "scripts_snake/run_bwa_mem.py"
+
+rule samtools_sort_libs:
+    input:
+        "tmp_{SAMPLE}_{LA}_{DATE}/{SAMPLE}_{LA}_{DATE}.bam"
+    output:
+        BAMS_UN+"/{SAMPLE}_{LA}_{DATE}.bam"
+    log:
+        BAMS_UN+"/{SAMPLE}_{LA}_{DATE}_sorting.log",
+    params:
+        extra=" -m 4G",
+    threads: 1
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_samtools_sort.py"
+
+rule mark_duplicates_libs:
+    input:
+        bams=BAMS_UN+"/{SAMPLE}_{LA}_{DATE}.bam"
+    # optional to specify a list of BAMs; this has the same effect
+    # of marking duplicates on separate read groups for a sample
+    # and then merging
+    output:
+        bam=BAMS_UN_PIC+"/{SAMPLE}_{LA}_{DATE}.bam",
+        metrics=BAMS_UN_PIC+"/{SAMPLE}_{LA}_{DATE}.metrics.txt",
+    conda:
+       NGS_SCRIPTS+"envs/NGS.yml"
+    log:
+        BAMS_UN_PIC+"/{SAMPLE}_{LA}_{DATE}.log",
+    params:
+        extra="--REMOVE_DUPLICATES true --VALIDATION_STRINGENCY LENIENT --ASSUME_SORT_ORDER coordinate",
+    # optional specification of memory usage of the JVM that snakemake will respect with global
+    # resource restrictions (https://snakemake.readthedocs.io/en/latest/snakefiles/rules.html#resources)
+    # and which can be used to request RAM during cluster job submission as `{resources.mem_mb}`:
+    # https://snakemake.readthedocs.io/en/latest/executing/cluster.html#job-properties
+    resources:
+        mem_mb=11000,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_picard_duplicates.py"
+
+rule samtools_index_libs:
+    input:
+        BAMS_UN_PIC+"/{SAMPLE}_{LA}_{DATE}.bam",
+    output:
+        BAMS_UN_PIC+"/{SAMPLE}_{LA}_{DATE}.bam.bai",
+    log:
+        BAMS_UN_PIC+"/{SAMPLE}_{LA}_{DATE}_index.log",
+    params:
+        extra="",  # optional params string
+    threads: 1  # This value - 1 will be sent to -@
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_samtools_index.py"
+
+rule get_stats_libs:
+    input:
+        bam=BAMS_UN_PIC+"/{SEQ}.bam",
+        bai=BAMS_UN_PIC+"/{SEQ}.bam.bai",
+    output:
+        STATS+"/{SEQ}_basic_stats.txt",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    params:
+        bed=NU_BED
+    log:
+        STATS+"/{SEQ}_basic_stats.log",
+    resources:
+        mem_mb=1024,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_get_stats.py"
+
+rule get_fastas_MT:
+    input:
+        bam=BAMS_UN_PIC+"/{SEQ}.bam",
+        reference=REF,
+        bed=MT_BED,
+        bai=BAMS_UN_PIC+"/{SEQ}.bam.bai",
+    output:
+        FASTAS+"/{SEQ}.fasta",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    log:
+        FASTAS+"/{SEQ}.log",
+    params:
+        extra="-l30 -q30 -Q30 -s5 -e -M",
+    # optional specification of memory usage of the JVM that snakemake will respect with global
+    # resource restrictions (https://snakemake.readthedocs.io/en/latest/snakefiles/rules.html#resources)
+    # and which can be used to request RAM during cluster job submission as `{resources.mem_mb}`:
+    # https://snakemake.readthedocs.io/en/latest/executing/cluster.html#job-properties
+    resources:
+        mem_mb=1024,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_htsbox_pileup.py"
+
+rule get_coverage_MT:
+    input:
+        bam=BAMS_UN_PIC+"/{SEQ}.bam",
+        fasta=REF,
+        intervals=MT_BED,
+        bai=BAMS_UN_PIC+"/{SEQ}.bam.bai",
+        dic=REF_RAW+".dict",
+    output:
+        multiext(
+            "stats/{SEQ}_MT",
+            "",
+            ".sample_interval_summary",
+            ".sample_cumulative_coverage_counts",
+            ".sample_cumulative_coverage_proportions",
+            ".sample_interval_statistics",
+            ".sample_statistics",
+            ".sample_summary"),
+    log:
+        STATS+"/{SEQ}_coverage_MT.log",
+    params:
+        extra="--minMappingQuality 30",
+        java_opts="",
+    conda:
+        NGS_SCRIPTS+"envs/gatk3.yml",
+    resources:
+        mem_mb=20000,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_gatk_coverage.py"
+
+rule get_coverage_exome:
+    input:
+        bam=BAMS_UN_PIC+"/{SEQ}.bam",
+        fasta=REF,
+        intervals=NU_BED,
+        bai=BAMS_UN_PIC+"/{SEQ}.bam.bai",
+        dic=REF_RAW+".dict",
+    output:
+        multiext(
+            "stats/{SEQ}_nuclear",
+            "",
+            ".sample_interval_summary",
+            ".sample_cumulative_coverage_counts",
+            ".sample_cumulative_coverage_proportions",
+            ".sample_interval_statistics",
+            ".sample_statistics",
+            ".sample_summary"),
+    log:
+        STATS+"/{SEQ}_coverage_nuclear.log",
+    params:
+        extra="--minMappingQuality 30",
+        java_opts="",
+    conda:
+        NGS_SCRIPTS+"envs/gatk3.yml"
+    resources:
+        mem_mb=20000,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_gatk_coverage.py"
+
+
+rule get_metrics_libs:
+    input:
+        stats=[STATS+"/{SEQ}_basic_stats.txt".format(SEQ=SEQ) for SEQ in DIC.keys()],
+        fastas=[FASTAS+"/{SEQ}.fasta".format(SEQ=SEQ) for SEQ in DIC.keys()],
+        coverages_MT=[STATS+"/{SEQ}_MT".format(SEQ=SEQ) for SEQ in DIC.keys()],
+        coverages_NU=[STATS+"/{SEQ}_nuclear".format(SEQ=SEQ) for SEQ in DIC.keys()],
+    output:
+        final="metrics_libs.csv"
+    params:
+        tmp="tmp_libs.txt",
+        codes=list(DIC.keys()),
+        stats=STATS,
+        settings="False",
+        pic=BAMS_UN_PIC,
+        fastas=FASTAS,
+        MT_coverage=STATS,
+        nuclear_coverage=STATS,
+        reads_on_target="True"
+    script:
+        NGS_SCRIPTS+"scripts_snake/summarize_stats.py"
+
+
+rule samtools_merge_sample:
+    input:
+        lambda wildcards: DIC_MERGE[wildcards.SAMPLE].split()
+    output:
+        "tmp_{SAMPLE}/{SAMPLE}.bam",
+    log:
+        BAMS+"/{SAMPLE}_merging.log",
+#   "tmp_{SAMPLE}/{SAMPLE}.log",
+    params:
+        extra="--VALIDATION_STRINGENCY LENIENT",  # optional additional parameters as string
+    threads: 1
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_picard_MergeSamFiles.py"
+
+rule samtools_sort_samples:
+    input:
+        "tmp_{SAMPLE}/{SAMPLE}.bam"
+    output:
+        BAMS+"/{SAMPLE}.bam",
+    log:
+        BAMS+"/{SAMPLE}_sorting.log",
+    params:
+        extra="-m 4G",
+    threads: 1
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_samtools_sort.py"
+
+rule mark_duplicates_samples:
+    input:
+        bams=BAMS+"/{SAMPLE}.bam",
+    # optional to specify a list of BAMs; this has the same effect
+    # of marking duplicates on separate read groups for a sample
+    # and then merging
+    output:
+        bam=BAMS_PIC+"/{SAMPLE}.bam",
+        metrics=BAMS_PIC+"/{SAMPLE}.metrics.txt",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    log:
+        BAMS_PIC+"/{SAMPLE}.log",
+    params:
+        extra="--REMOVE_DUPLICATES true --VALIDATION_STRINGENCY LENIENT --ASSUME_SORT_ORDER coordinate",
+    # optional specification of memory usage of the JVM that snakemake will respect with global
+    # resource restrictions (https://snakemake.readthedocs.io/en/latest/snakefiles/rules.html#resources)
+    # and which can be used to request RAM during cluster job submission as `{resources.mem_mb}`:
+    # https://snakemake.readthedocs.io/en/latest/executing/cluster.html#job-properties
+    resources:
+        mem_mb=11000,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_picard_duplicates.py"
+
+rule samtools_index_samples:
+    input:
+        BAMS_PIC+"/{SAMPLE}.bam",
+    output:
+        BAMS_PIC+"/{SAMPLE}.bam.bai",
+    log:
+        BAMS_PIC+"/{SAMPLE}_index.log",
+    params:
+        extra="",  # optional params string
+    threads: 1  # This value - 1 will be sent to -@
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_samtools_index.py"
+
+rule get_fastas:
+    input:
+        bam=BAMS_PIC+"/{SAMPLE}.bam",
+        bai=BAMS_PIC+"/{SAMPLE}.bam.bai",
+        reference=REF,
+        bed=MT_BED
+    output:
+        FASTAS+"/{SAMPLE}.fasta",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    log:
+        FASTAS+"/{SAMPLE}.log",
+    params:
+        extra="-l30 -q30 -Q30 -s5 -e -M",
+    # optional specification of memory usage of the JVM that snakemake will respect with global
+    # resource restrictions (https://snakemake.readthedocs.io/en/latest/snakefiles/rules.html#resources)
+    # and which can be used to request RAM during cluster job submission as `{resources.mem_mb}`:
+    # https://snakemake.readthedocs.io/en/latest/executing/cluster.html#job-properties
+    resources:
+        mem_mb=1024,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_htsbox_pileup.py"
+
+rule gatk3_coverage_MT_sample:
+    input:
+        bam=BAMS_PIC+"/{SAMPLE}.bam",
+        fasta=REF,
+        intervals=MT_BED,
+        bai=BAMS_PIC+"/{SAMPLE}.bam.bai",
+        dic=REF_RAW+".dict",
+    output:
+        file="stats/{SAMPLE}_MT",
+        coverage_counts="stats/{SAMPLE}_MT.sample_cumulative_coverage_counts",
+        coverage_proportions="stats/{SAMPLE}_MT.sample_cumulative_coverage_proportions",
+        interval_statistics="stats/{SAMPLE}_MT.sample_interval_statistics",
+        interval_summary="stats/{SAMPLE}_MT.sample_interval_summary",
+        statistics="stats/{SAMPLE}_MT.sample_statistics",
+        summary="stats/{SAMPLE}_MT.sample_summary",
+    params:
+#        extra="--minMappingQuality 30 --omitDepthOutputAtEachBase --omitIntervalStatistics"
+        extra="--minMappingQuality 30"
+    conda:
+        NGS_SCRIPTS+"envs/gatk3.yml"
+    resources:
+        mem_mb=20000,
+    log:
+        "stats/{SAMPLE}_gatk3_converage.log"
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_gatk_coverage.py"
+
+rule get_coverage_exome_sample:
+    input:
+        bam=BAMS_PIC+"/{SAMPLE}.bam",
+        fasta=REF,
+        intervals=NU_BED,
+        bai=BAMS_PIC+"/{SAMPLE}.bam.bai",
+        dic=REF_RAW+".dict",
+    output:
+        multiext(
+            "stats/{SAMPLE}_nuclear",
+            "",
+            ".sample_interval_summary",
+            ".sample_cumulative_coverage_counts",
+            ".sample_cumulative_coverage_proportions",
+            ".sample_interval_statistics",
+            ".sample_statistics",
+            ".sample_summary"),
+    log:
+        STATS+"/{SAMPLE}_coverage_nuclear.log",
+    params:
+        extra="--minMappingQuality 30",
+        java_opts="",
+    conda:
+        NGS_SCRIPTS+"envs/gatk3.yml"
+    resources:
+        mem_mb=20000,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_gatk_coverage.py"
+
+rule get_stats_samples:
+    input:
+        bam=BAMS_PIC+"/{SAMPLE}.bam",
+        bai=BAMS_PIC+"/{SAMPLE}.bam.bai",
+    output:
+        STATS+"/{SAMPLE}_basic_stats.txt",
+    conda:
+        NGS_SCRIPTS+"envs/NGS.yml"
+    params:
+        bed=NU_BED
+    log:
+        STATS+"/{SAMPLE}_basic_stats.log",
+    resources:
+        mem_mb=1024,
+    script:
+        NGS_SCRIPTS+"scripts_snake/run_get_stats.py"     
+
+rule get_metrics_samples:
+    input:
+        stats=[STATS+"/{SAMPLE}_basic_stats.txt".format(SAMPLE=SAMPLE) for SAMPLE in DIC_MERGE.keys()],
+        fastas=[FASTAS+"/{SAMPLE}.log".format(SAMPLE=SAMPLE) for SAMPLE in DIC_MERGE.keys()],
+        coverages_MT=[STATS+"/{SAMPLE}_MT".format(SAMPLE=SAMPLE) for SAMPLE in DIC_MERGE.keys()],
+        coverages_NU=[STATS+"/{SAMPLE}_nuclear".format(SAMPLE=SAMPLE) for SAMPLE in DIC_MERGE.keys()],
+    output:
+        final="metrics_samples.csv"
+    params:
+        tmp="tmp_samples.txt",
+        codes=list(DIC_MERGE.keys()),
+        stats=STATS,
+        settings="False",
+        pic=BAMS_PIC,
+        fastas=FASTAS,
+        MT_coverage=STATS,
+        nuclear_coverage=STATS,
+        reads_on_target="True"
+    script:
+        NGS_SCRIPTS+"scripts_snake/summarize_stats.py"
