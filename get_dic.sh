@@ -4,7 +4,7 @@ set -e
 
 usage() {
   echo "Usage: $0 -g <GOALS_FILE> -c <CORRESPONDENCIES_FILE> -f <FINAL_FILE> -p <PATH_RAW>"
-  echo "Example for prime: $0 -g list.txt -c /media/jbod2/eugenio/correspondencies.csv -f dic.txt -p /media/jbod3/joel/ngs/raw_data/sequencing"
+  echo "Example for prime: $0 -g list.txt -c /media/jbod2/eugenio/correspondencies.csv -f dic.txt -p /media/jbod4/eugenio_silva/backups/sequencing"
   echo "Example for arc: $0 -g list.txt -c /data/arch-ferrets/arch0580/correspondencies.csv -f dic.txt -p /data/arch-ferrets/backups/sequencing/"
 }
 
