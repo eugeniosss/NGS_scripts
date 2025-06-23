@@ -1,4 +1,4 @@
-🧬 Ancient DNA Mapping and Analysis Pipeline
+# 🧬 Ancient DNA Mapping and Analysis Pipeline
 
 This Snakemake pipeline processes ancient DNA sequencing data: it performs read preprocessing, mapping to a reference genome, duplicate removal, mitochondrial genome assembly, coverage analysis, and generates summary statistics.
 
