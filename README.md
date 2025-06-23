@@ -38,7 +38,7 @@ Generate summary tables for libraries and samples
 🚀 Running the Pipeline
 1. 📦 Clone the Project
    
-git clone https://github.com/eugeniosss/NGS_scripts
+<pre> ```bash # git clone https://github.com/eugeniosss/NGS_scripts ``` </pre>
 
 2. 🧪 Create a Snakemake Environment
    
