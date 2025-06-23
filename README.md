@@ -2,7 +2,7 @@
 
 This Snakemake pipeline processes ancient DNA sequencing data: it performs read preprocessing, mapping to a reference genome, duplicate removal, mitochondrial genome assembly, coverage analysis, and generates summary statistics.
 
-⚙️ Pipeline Overview
+## ⚙️ Pipeline Overview
 
 🔹 Preprocessing
 
@@ -35,7 +35,7 @@ Create FASTA consensus (HTSBox)
 
 Generate summary tables for libraries and samples
 
-🚀 Running the Pipeline
+## 🚀 Running the Pipeline
 1. 📦 Clone the Project
    
 <pre>git clone https://github.com/eugeniosss/NGS_scripts</pre>
