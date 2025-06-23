@@ -1,44 +1,40 @@
 🧬 Ancient DNA Mapping and Analysis Pipeline
-This Snakemake pipeline processes ancient DNA sequencing data, performs read preprocessing, mapping to a reference genome, duplicate removal, mitochondrial genome assembly, coverage analysis, and generates summary statistics.
+This Snakemake pipeline processes ancient DNA sequencing data: it performs read preprocessing, mapping to a reference genome, duplicate removal, mitochondrial genome assembly, coverage analysis, and generates summary statistics.
 
 ⚙️ Pipeline Overview
-Preprocessing:
+🔹 Preprocessing
+Adapter trimming with AdapterRemoval2
 
-  Adapter trimming with AdapterRemoval2
+Merge overlapping reads
 
-  Merge overlapping reads
+🔹 Mapping
+Index circularized reference genome
 
-Mapping:
+Align reads using BWA
 
-  Index circularized reference genome
+Realign to account for circular MT genome structure
 
-  Align reads using BWA
+🔹 Post-mapping
+Sort BAM files
 
-  Realign to account for circular MT genome structure
+Mark duplicates using Picard
 
-Post-mapping:
+Index BAMs
 
-  Sort BAMs
+🔹 Statistics and QC
+Extract coverage metrics (GATK3)
 
-  Mark duplicates (Picard)
+Create FASTA consensus (HTSBox)
 
-  Index BAMs
-
-Statistics and QC:
-
-  Extract coverage metrics (GATK3)
-
-  Create FASTA consensus (HTSBox)
-
-  Generate summary tables for libraries and samples
+Generate summary tables for libraries and samples
 
 🚀 Running the Pipeline
-Clone/Prepare Project
+1. 📦 Clone the Project
 git clone https://github.com/eugeniosss/NGS_scripts
 
-Install snakemake in a new environment
-conda create -c conda-forge -c bioconda -n snakemake snakemake
+2. 🧪 Create a Snakemake Environment
+conda create -n snakemake -c conda-forge -c bioconda snakemake
+conda activate snakemake
 
-
-Run with Snakemake (for example 20 cores)
+3. ▶️ Run with Snakemake (e.g., using 20 cores)
 snakemake --use-conda --cores 20
