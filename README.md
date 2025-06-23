@@ -32,11 +32,14 @@ Generate summary tables for libraries and samples
 
 🚀 Running the Pipeline
 1. 📦 Clone the Project
+   
 git clone https://github.com/eugeniosss/NGS_scripts
 
 2. 🧪 Create a Snakemake Environment
+   
 conda create -n snakemake -c conda-forge -c bioconda snakemake
 conda activate snakemake
 
 3. ▶️ Run with Snakemake (e.g., using 20 cores)
+
 snakemake --use-conda --cores 20
