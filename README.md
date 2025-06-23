@@ -6,28 +6,22 @@ This Snakemake pipeline processes ancient DNA sequencing data: it performs read 
 
 🔹 Preprocessing
 Adapter trimming with AdapterRemoval2
-
 Merge overlapping reads
+
 
 🔹 Mapping
 Index circularized reference genome
-
 Align reads using BWA
-
 Realign to account for circular MT genome structure
 
 🔹 Post-mapping
 Sort BAM files
-
 Mark duplicates using Picard
-
 Index BAMs
 
 🔹 Statistics and QC
 Extract coverage metrics (GATK3)
-
 Create FASTA consensus (HTSBox)
-
 Generate summary tables for libraries and samples
 
 🚀 Running the Pipeline
