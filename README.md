@@ -42,8 +42,8 @@ Generate summary tables for libraries and samples
 
 2. 🧪 Create a Snakemake Environment
    
-conda create -n snakemake -c conda-forge -c bioconda snakemake
-conda activate snakemake
+<pre>conda create -n snakemake -c conda-forge -c bioconda snakemake
+conda activate snakemake </pre>
 
 3. ▶️ Run with Snakemake (e.g., using 20 cores)
 
