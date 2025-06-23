@@ -47,4 +47,4 @@ conda activate snakemake </pre>
 
 3. ▶️ Run with Snakemake (e.g., using 20 cores)
 
-snakemake --use-conda --cores 20
+<pre>snakemake --use-conda --cores 20 </pre>
