@@ -34,7 +34,6 @@ Statistics and QC:
 
 🚀 Running the Pipeline
 Clone/Prepare Project
-
 git clone https://github.com/eugeniosss/NGS_scripts
 
 Install snakemake in a new environment
@@ -42,5 +41,4 @@ conda create -c conda-forge -c bioconda -n snakemake snakemake
 
 
 Run with Snakemake (for example 20 cores)
-
 snakemake --use-conda --cores 20
