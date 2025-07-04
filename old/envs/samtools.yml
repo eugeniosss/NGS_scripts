@@ -1,0 +1,4 @@
+name: samtools
+channels:
+  - defaults
+prefix: /home/arch0580/.conda/envs/samtools

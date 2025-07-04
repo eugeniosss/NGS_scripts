@@ -1,0 +1,22 @@
+__author__ = "Johannes Köster"
+__copyright__ = "Copyright 2016, Johannes Köster"
+__email__ = "koester@jimmy.harvard.edu"
+__license__ = "MIT"
+
+
+import tempfile
+from pathlib import Path
+from snakemake.shell import shell
+from snakemake_wrapper_utils.samtools import get_samtools_opts
+import os
+
+extra = snakemake.params.get("extra", "")
+log = snakemake.log_fmt_shell(stdout=True, stderr=True)
+out=os.path.splitext(snakemake.output[0])[0]
+
+with tempfile.TemporaryDirectory() as tmpdir:
+    tmp_prefix = Path(tmpdir) / "samtools_fastq.sort_"
+
+    shell(
+        "samtools sort {extra} {snakemake.input[0]} -o {snakemake.output} {log}"
+    )

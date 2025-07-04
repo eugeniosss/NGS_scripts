@@ -1,0 +1,9 @@
+name: NGS
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - samtools=1.19
+  - picard =2.27.5
+  - bowtie2=2.5.3
