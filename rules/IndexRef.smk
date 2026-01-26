@@ -3,13 +3,13 @@ REF_RAW = config["ref"].rsplit(".", 1)[0]
 
 rule bwa_index:
     input:
-        get_reference_for_mapping()
+        config["ref"]
     output:
-        idx=multiext(get_reference_for_mapping(), ".amb", ".ann", ".bwt", ".pac", ".sa")
+        idx=multiext(config["ref"], ".amb", ".ann", ".bwt", ".pac", ".sa")
     log:
         "bwa_index/bwa_index.log"
     conda:
-        config["dir"]+ "envs/NGS.yml"
+        NGS_SCRIPTS + "envs/NGS.yml"
     shell:
         """
         (bwa index {input}) &> {log}
@@ -23,7 +23,7 @@ rule samtools_faidx:
     log:
         "bwa_index/faidx.log"
     conda:
-        config["dir"] + "envs/NGS.yml"
+        NGS_SCRIPTS + "envs/NGS.yml"
     shell:
         """
         (samtools faidx {input}) &> {log}
@@ -37,7 +37,7 @@ rule create_dict:
     log:
         "bwa_index/create_dict.log"
     conda:
-        config["dir"] + "envs/NGS.yml"
+        NGS_SCRIPTS + "envs/gatk3.yml"
     shell:
         """
         (picard CreateSequenceDictionary \
