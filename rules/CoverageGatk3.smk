@@ -19,17 +19,19 @@ rule coverage_gatk3:
         )
     params:
         gatk_params = config["coverages"].get("params", ""),
-        out=config["coverages"]["output_dir_prefix"] + "{bedtype}/{unit}"
+        out=config["coverages"]["output_dir_prefix"] + "{bedtype}/{unit}",
+        mem_to_use=lambda wc : config["coverages"]["mem_mb"]
     log:
         config["coverages"]["output_dir_prefix"] + "{bedtype}/{unit}_coverage.log"
-    threads:
-        config["coverages"].get("threads", 1)
+    threads: 1
+    resources:
+        mem_mb=int(config["coverages"]["mem_mb"]*config["mem_overhead"])
     conda:
         config["dir"] + "envs/gatk3.yml"
     shell:
         r"""
         gatk3 -T DepthOfCoverage \
-            -Xmx8g \
+            -Xmx{params.mem_to_use}M \
             -R {input.ref} \
             -I {input.bam} \
             -L {input.bed} \

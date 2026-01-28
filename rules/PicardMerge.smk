@@ -2,43 +2,48 @@ rule picard_merge_sample_bams:
     input:
         lambda wc: DIC_MERGE[wc.sample]
     output:
-        bam = config['merge_same_sample_runs']['output_merge_dir'] + "/{sample}.bam"
+        bam = maybe_temp(config['merge_same_sample_runs']['output_merge_dir'] + "/{sample}.bam")
     log:
         config['merge_same_sample_runs']['output_merge_dir'] + "/{sample}.log"
     params:
         extra = config["merge_same_sample_runs"]["params"],
-        input_list = lambda wildcards, input: " ".join(f"--INPUT {f}" for f in input)
+        input_list = lambda wildcards, input: " ".join(f"--INPUT {f}" for f in input),
+        mem_to_use=lambda wc: int(config["merge_same_sample_runs"]["mem_mb"] / 1024)
     conda:
         config["dir"] + "envs/NGS.yml"
     threads: 1
+    resources:
+        mem_mb=int(config["merge_same_sample_runs"]["mem_mb"]*config["mem_overhead"]),
     shell:
         r"""
         picard MergeSamFiles \
+            -Xmx{params.mem_to_use}G \
             {params.extra} \
             {params.input_list} \
             --OUTPUT {output.bam} \
-            --TMP_DIR tmp_{wildcards.sample} \
-            &> {log}
+            &> {log}    
         """
 
 rule markduplicates_merged:
     input:
         bam = config['merge_same_sample_runs']['output_merge_dir'] + "/{sample}.bam"
     output:
-        bam = config['merge_same_sample_runs']['output_dedup_dir'] + "/{sample}.bam",
+        bam = temp_if_not_final(config['merge_same_sample_runs']['output_dedup_dir'] + "/{sample}.bam"),
         metrics = config['merge_same_sample_runs']['output_dedup_dir'] + "/{sample}.metrics.txt"
     conda:
         config["dir"] + "envs/NGS.yml"
     params:
-        extra=config['dedup']['params']
+        extra=config['dedup']['params'],
+        mem_to_use=lambda wc: int(config["dedup"]["mem_mb"] / 1024)
     resources:
-        mem_mb=11000,
+        mem_mb=int(config["dedup"]["mem_mb"]*config["mem_overhead"]),
     threads: 1
     log:
         config['merge_same_sample_runs']['output_dedup_dir'] + "/{sample}.markdup.log"
     shell:
         r"""
         (picard MarkDuplicates \
+        -Xmx{params.mem_to_use}G \
         {params.extra} \
         --INPUT {input} \
         --OUTPUT {output.bam} \
@@ -53,6 +58,8 @@ rule index_bams_samples:
     log:
         config['merge_same_sample_runs']['output_dedup_dir']+"/{sample}_indexing.log",
     threads: 1
+    resources:
+        mem_mb = 500
     conda:
         config["dir"] + "envs/NGS.yml"
     shell:
@@ -87,6 +94,8 @@ rule summarize_samples_metrics:
     output:
         summary = "samples_summary.tsv"
     threads: 1
+    resources:
+        mem_mb = 1000
     run:
         import pandas as pd
         import os

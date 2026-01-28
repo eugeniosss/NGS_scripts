@@ -7,6 +7,8 @@ rule ConsensusSamtools:
         missing = config["consensus"]["output_dir_prefix"] + "{chr}/{unit}.missing.txt"
     params:
         extra = config["consensus"]["params"]
+    resources:
+        mem_mb=config["consensus"]["mem_mb"]
     log:
         config["consensus"]["output_dir_prefix"] + "{chr}/{unit}.log"
     conda:

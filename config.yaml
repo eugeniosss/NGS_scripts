@@ -1,0 +1,77 @@
+
+input: dic_sub.txt
+
+dir: /media/jbod2/eugenio/NGS_scripts/
+
+ref: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta
+
+mem_overhead: 1.2 #OVERHEAD FOR SAMTOOLS SORT; PICARD  and GATK, mem_mb should be what I want, and this will add on the rules
+
+clean_intermediates: true
+
+adapterremoval2:
+  run: False
+  output_dir: adapterremoval2
+  threads: 4
+  options: "--trimns --trimqualities --minlength 30"
+  concatenate: False
+  mem_mb: 2000
+
+mapping:
+  soft: bwa-aln
+  output_dir: mapping
+  threads: 4
+  params: "-l 1024"
+  reads_group_parser: "_"
+  mapping_mem_mb: 4000
+  indexing_mem_mb: 10000
+
+sorting:
+  threads: 4
+  mem_mb: 16000
+
+circular_mapper:
+  run: True
+  output_dir: circular
+  elongation: 500
+  chr: MT
+  mem_mb: 2000
+
+dedup:
+  output_dir: dedup
+  params: "--REMOVE_DUPLICATES true --VALIDATION_STRINGENCY LENIENT --ASSUME_SORT_ORDER coordinate"
+  mem_mb: 10000
+
+merge_same_sample_runs:
+  run: False
+  params: "--VALIDATION_STRINGENCY LENIENT"
+  output_merge_dir: merged
+  output_dedup_dir: merged_dedup
+  output_circular_dir: merged_circular
+  mem_mb: 10000
+
+consensus:
+  run: True
+  soft: samtools
+  chrs: ["MT"]
+  output_dir_prefix: fastas_
+  params: "--min-MQ 30 --min-BQ 30 -d 5"
+  mem_mb: 2000
+
+stats:
+  output_dir: stats
+  add_chrs: ["MT"]
+  add_beds:
+    "": ""
+    MT2: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
+#    MT4: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
+
+coverages:
+  run: True
+  threads: 1
+  output_dir_prefix: coverage_
+  params: "--minMappingQuality 30 --omitDepthOutputAtEachBase"
+  beds:
+    all: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
+    exome: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
+  mem_mb : 8000

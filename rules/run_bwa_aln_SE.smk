@@ -1,17 +1,19 @@
 rule bwa_aln_SE:
     input:
         fastq = lambda wc: get_final_fastqs(wc.SEQ),
-        idx=multiext(config["ref"], ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=lambda wc: multiext(get_reference_for_mapping(), ".amb", ".ann", ".bwt", ".pac", ".sa")
     output:
-        config['mapping']['output_dir']+"/{SEQ}.sai"
+        maybe_temp(config['mapping']['output_dir']+"/{SEQ}.sai")
     conda:
         config["dir"] + "envs/NGS.yml"
     params:
         extra=config["mapping"]["params"],
-        ref=config["ref"]
+        ref=lambda wc: get_reference_for_mapping(),
     log:
         config['mapping']['output_dir']+"/{SEQ}_mapping.log",
     threads: config["mapping"]["threads"]
+    resources:
+        mem_mb=config["mapping"]["mapping_mem_mb"]
     shell:
         """
         (bwa aln \
@@ -26,17 +28,19 @@ rule bwa_samse_SE:
     input:
         fastq = lambda wc: get_final_fastqs(wc.SEQ),
         sai=config['mapping']['output_dir']+"/{SEQ}.sai",
-        idx=multiext(config["ref"], ".amb", ".ann", ".bwt", ".pac", ".sa"),
+        idx=lambda wc: multiext(get_reference_for_mapping(), ".amb", ".ann", ".bwt", ".pac", ".sa")
     output:
-        config['mapping']['output_dir']+"/{SEQ}.bam",
+        bam=maybe_temp(config['mapping']['output_dir']+"/{SEQ}_unsorted.bam")
     conda:
         config["dir"] + "envs/NGS.yml",
     params:
-        ref=config["ref"],
+        ref=lambda wc: get_reference_for_mapping(),
         parser=config["mapping"]["reads_group_parser"]
     log:
         config['mapping']['output_dir']+"/{SEQ}_sampe.log",
     threads: 1
+    resources:
+        mem_mb=config["mapping"]["mapping_mem_mb"]
     shell:
         r"""
         # Build read group
@@ -57,6 +61,5 @@ rule bwa_samse_SE:
                 {input.fastq} \
                 -r "$RG" \
             | samtools view -Sb - \
-            | samtools sort -o {output} -
-        ) &> {log}
+        > {output.bam}) &> {log}
         """

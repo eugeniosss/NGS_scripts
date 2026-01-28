@@ -3,7 +3,7 @@ rule bwa_mem:
         fastq = lambda wc: get_final_fastqs(wc.SEQ),
         idx=lambda wc: multiext(get_reference_for_mapping(), ".amb", ".ann", ".bwt", ".pac", ".sa")
     output:
-        bam=config['mapping']['output_dir'] + "/{SEQ}.bam"
+        bam=maybe_temp(config['mapping']['output_dir']+"/{SEQ}_unsorted.bam")
     conda:
         config["dir"] + "envs/NGS.yml"
     params:
@@ -13,6 +13,8 @@ rule bwa_mem:
     log:
         config['mapping']['output_dir'] + "/{SEQ}_mapping.log"
     threads: config["mapping"]["threads"]
+    resources:
+        mem_mb=config["mapping"]["mapping_mem_mb"]
     shell:
         r"""
         # Build read group
@@ -34,6 +36,5 @@ rule bwa_mem:
                 {params.ref} \
                 {input.fastq} \
             | samtools view -Sb - \
-            | samtools sort -@{threads} -o {output.bam} -
-        ) &> {log}
+        > {output.bam}) &> {log}
         """

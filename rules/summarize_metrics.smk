@@ -30,6 +30,8 @@ rule summarize_run_metrics:
     output:
         summary = "runs_summary.tsv"
     threads: 1
+    resources:
+        mem_mb = 500
     run:
         import pandas as pd
         import os
