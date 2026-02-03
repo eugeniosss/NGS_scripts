@@ -129,17 +129,23 @@ Reproducible via Conda environments
 
 # 🚀 Running the Pipeline
 
-##1. 📦 Clone the Project
+## 1. 📦 Clone the Project
 
 <pre>git clone https://github.com/eugeniosss/NGS_scripts
 cd NGS_scripts</pre>
 
-##2. 🧪 Create a Snakemake Environment
+## 2. 🧪 Create a Snakemake Environment
 
-<pre>conda create -n snakemake -c conda-forge -c bioconda snakemake=9.15
+<pre>conda create -n snakemake -c conda-forge -c bioconda snakemake
 conda activate snakemake</pre>
 
-##3. ⚙️ Configure the Pipeline
+## 3. Prepare Input Files
+
+Prepare Input Files
+
+<pre>sample1 reads_R1.fastq.gz reads_R2.fastq.gz</pre>
+
+## 4. ⚙️ Configure the Pipeline
 
 Edit the configuration file to match your data and system:
 
@@ -152,10 +158,10 @@ Make sure to update:
 - Enabled/disabled modules
 - Memory and thread settings
 
-##4. ▶️ Run with Snakemake (example using 20 cores)
+## 5. ▶️ Run with Snakemake (example using 20 cores)
 
 <pre>snakemake --use-conda --cores 20</pre>
 
-##5. 🔍 (Optional) Dry-run to Preview Jobs
+## 6. 🔍 (Optional) Dry-run to Preview Jobs
 
 <pre>snakemake -n</pre>
