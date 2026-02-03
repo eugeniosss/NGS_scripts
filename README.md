@@ -14,13 +14,13 @@ Format example:
 sample1,reads_R1.fastq.gz reads_R2.fastq.gz
 
 ## 📁 General Settings
-dir: Directory where NGS_scripts is.
+<pre>dir: Directory where NGS_scripts is.
 
 ref: Path to fasta file.
 
 mem_overhead: Memory safety factor applied to memory-intensive rules. Useful for samtools sort, Picard, and GATK. Example: mem_mb: 8000 → actually requests 9600 MB
 
-clean_intermediates: Automatically deletes intermediate files once downstream steps are completed. Helps reduce disk usage
+clean_intermediates: Automatically deletes intermediate files once downstream steps are completed. Helps reduce disk usage</pre>
 
 ## ✂️ Adapter Removal (AdapterRemoval2)
 <pre>adapterremoval2:
@@ -115,7 +115,7 @@ The pipeline will fail early if this condition is violated.
     exome: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
   mem_mb : 8000</pre>
 
-##✅ Design Philosophy
+## ✅ Design Philosophy
 
 Fail early on invalid configurations
 
