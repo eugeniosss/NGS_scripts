@@ -139,7 +139,7 @@ cd NGS_scripts</pre>
 <pre>conda create -n snakemake -c conda-forge -c bioconda snakemake
 conda activate snakemake</pre>
 
-## 3. Prepare Input Files
+## 3. 🧬 Prepare Input Files
 
 Prepare Input Files
 
