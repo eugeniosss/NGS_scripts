@@ -10,7 +10,7 @@ mem_overhead: 1.2 #OVERHEAD FOR SAMTOOLS SORT; PICARD  and GATK, mem_mb should b
 clean_intermediates: true
 
 adapterremoval2:
-  run: False
+  run: True
   output_dir: adapterremoval2
   threads: 4
   options: "--trimns --trimqualities --minlength 30"
@@ -60,9 +60,9 @@ consensus:
 
 stats:
   output_dir: stats
+  count_properly_paired: True
   add_chrs: ["MT"]
   add_beds:
-    "": ""
     MT2: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
 #    MT4: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
 

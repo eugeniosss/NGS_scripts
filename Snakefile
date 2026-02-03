@@ -17,6 +17,7 @@ DO_COLLAPSE = DO_ADAPTER and ("--collapse" in adapter_config.get("options", ""))
 DO_CONCAT = adapter_config.get("concatenate", False)
 DO_CIRC = config["circular_mapper"]["run"]
 CLEANUP = config["clean_intermediates"]
+COUNT_PP = config["stats"]["count_properly_paired"]
 
 ### NON SENSE ERRORS ###
 
@@ -43,6 +44,26 @@ elif config["mapping"]["soft"]!="bwa-aln":
         f"ERROR: mapper should be 'bwa-mem' or 'bwa-aln'.\n"
         f"Invalid option used: '{config['mapping']['soft']}"
     ) 
+
+if COUNT_PP:
+    if DO_COLLAPSE:
+        raise ValueError(
+            "stats.count_properly_paired=True is incompatible with AdapterRemoval --collapse "
+            "(collapsed reads are single-end)."
+        )
+
+    if DO_CONCAT:
+        raise ValueError(
+            "stats.count_properly_paired=True is incompatible with concatenated FASTQs "
+            "(concatenation destroys pairing information)."
+        )
+
+if not (isinstance(config["stats"]["add_chrs"], list) or config["stats"]["add_chrs"] is False):
+    raise Exception("Error: config['stats']['add_chrs'] must be a list or False")
+
+if not (isinstance(config["stats"]["add_beds"], dict) or config["stats"]["add_beds"] is False):
+    raise Exception("Error: config['stats']['add_beds'] must be a dict or False")
+
 
 ### HELPER FUNCTIONS ###
 

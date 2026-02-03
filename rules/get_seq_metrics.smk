@@ -140,18 +140,18 @@ rule basic_stats:
             MAPCHR=$(samtools view -c -F 260 $BAM $CHR)
             MQ30CHR=$(samtools view -c -q 30 $BAM $CHR)
             echo $MAPCHR >> $TMP
-            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((MAPCHR*100/MAP)) >> $TMP; fi
+            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $MAPCHR/$MAP" | bc >> $TMP; fi
             echo $MQ30CHR >> $TMP
-            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((MQ30CHR*100/MAP)) >> $TMP; fi
+            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $MQ30CHR/$MAP" | bc >> $TMP; fi
 
             if [ "{params.count_pp}" != "False" ]; then
                 PPCHR=$(samtools view -c -f 2 $BAM $CHR)
                 PPCHR_MQ30=$(samtools view -c -f 2 -q 30 $BAM $CHR)
 
                 echo $PPCHR >> $TMP
-                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((PPCHR*100/MAP)) >> $TMP; fi
+                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $PPCHR/$MAP" | bc >> $TMP; fi
                 echo $PPCHR_MQ30 >> $TMP
-                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((PPCHR_MQ30*100/MAP)) >> $TMP; fi
+                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $PPCHR_MQ30/$MAP" | bc >> $TMP; fi
             fi
 
         done
@@ -163,18 +163,18 @@ rule basic_stats:
             MAPPAN=$(samtools view -c -F 260 -L $BED $BAM)
             MQ30PAN=$(samtools view -c -q 30 -L $BED $BAM)
             echo $MAPPAN >> $TMP
-            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((MAPPAN*100/MAP)) >> $TMP; fi
+            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $MAPPAN/$MAP" | bc >> $TMP; fi
             echo $MQ30PAN >> $TMP
-            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((MQ30PAN*100/MAP)) >> $TMP; fi
+            if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $MQ30PAN/$MAP" | bc >> $TMP; fi
 
             if [ "{params.count_pp}" != "False" ]; then
                 PPPAN=$(samtools view -c -f 2 -L $BED $BAM)
                 PPPAN_MQ30=$(samtools view -c -f 2 -q 30 -L $BED $BAM)
 
                 echo $PPPAN >> $TMP
-                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((PPPAN*100/MAP)) >> $TMP; fi
+                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo"scale=4; $PPPAN/$MAP" | bc >> $TMP; fi
                 echo $PPPAN_MQ30 >> $TMP
-                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo $((PPPAN_MQ30*100/MAP)) >> $TMP; fi
+                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo"scale=4; $PPPAN_MQ30/$MAP" | bc >> $TMP; fi
             fi
 
         done
