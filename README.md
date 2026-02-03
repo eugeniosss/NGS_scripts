@@ -126,3 +126,36 @@ Ancient DNA–friendly
 Disk-aware via automatic cleanup
 
 Reproducible via Conda environments
+
+# 🚀 Running the Pipeline
+
+##1. 📦 Clone the Project
+
+<pre>git clone https://github.com/eugeniosss/NGS_scripts
+cd NGS_scripts</pre>
+
+##2. 🧪 Create a Snakemake Environment
+
+<pre>conda create -n snakemake -c conda-forge -c bioconda snakemake=9.15
+conda activate snakemake</pre>
+
+##3. ⚙️ Configure the Pipeline
+
+Edit the configuration file to match your data and system:
+
+<pre>nano config.yaml</pre>
+
+Make sure to update:
+- Input sample dictionary (`input`)
+- Reference genome (`ref`)
+- Output directories
+- Enabled/disabled modules
+- Memory and thread settings
+
+##4. ▶️ Run with Snakemake (example using 20 cores)
+
+<pre>snakemake --use-conda --cores 20</pre>
+
+##5. 🔍 (Optional) Dry-run to Preview Jobs
+
+<pre>snakemake -n</pre>
