@@ -5,7 +5,7 @@ This repository contains a **Snakemake-based NGS pipeline** designed for flexibl
 The pipeline is fully configurable via a single YAML file.
 
 ## 📥 Input
-input: dic.txt
+<pre>input: dic.txt</pre>
 
 dic.txt maps sample IDs to FASTQ files
 
