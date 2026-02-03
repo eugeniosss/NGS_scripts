@@ -1,16 +1,13 @@
-🧬 NGS Mapping & Analysis Pipeline (Snakemake)
+# 🧬 NGS Mapping & Analysis Pipeline (Snakemake)
 
-This repository contains a Snakemake-based NGS pipeline designed for flexible processing of short-read sequencing data, with particular support for ancient DNA–style workflows (adapter trimming, collapsing, circular genomes, deduplication, consensus, statistics, and coverage).
+This repository contains a **Snakemake-based NGS pipeline** designed for flexible processing of short-read sequencing data, with particular support for ancient DNA–style workflows (adapter trimming, collapsing, circular genomes, deduplication, consensus, statistics, and coverage).
 
 The pipeline is fully configurable via a single YAML file.
 
 📥 Input
-input: dic_sub.txt
+input: dic.txt
 
-
-dic_sub.txt maps sample IDs to FASTQ files
-
-Supports single-end (SE) and paired-end (PE) data
+dic.txt maps sample IDs to FASTQ files
 
 Format example:
 
