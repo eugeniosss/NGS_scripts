@@ -23,19 +23,13 @@ mem_overhead: Memory safety factor applied to memory-intensive rules. Useful for
 clean_intermediates: Automatically deletes intermediate files once downstream steps are completed. Helps reduce disk usage
 
 ## ✂️ Adapter Removal (AdapterRemoval2)
-adapterremoval2:
-
+<pre>adapterremoval2:
   run: True or False
-  
   output_dir: directory to save output
-  
   threads: number of threads
-  
   options: additional options
-  
   concatenate: concatenate collapsed with r1 and r2 that passed filters. True or False
-  
-  mem_mb: memmory to use at this step (in MB)
+  mem_mb: memmory to use at this step (in MB)</pre>
 
 ⚠️ Important:
 
