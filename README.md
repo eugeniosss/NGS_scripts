@@ -4,62 +4,32 @@ This repository contains a **Snakemake-based NGS pipeline** designed for flexibl
 
 The pipeline is fully configurable via a single YAML file.
 
-📥 Input
+## 📥 Input
 input: dic.txt
 
 dic.txt maps sample IDs to FASTQ files
 
 Format example:
 
-sample1   reads_R1.fastq.gz reads_R2.fastq.gz
-sample2   reads.fastq.gz
+sample1,reads_R1.fastq.gz reads_R2.fastq.gz
 
-📁 General Settings
-dir: /media/jbod2/eugenio/NGS_scripts/
-ref: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta
+## 📁 General Settings
+dir: Directory where NGS_scripts is.
 
+ref: Path to fasta file.
 
-dir: Base directory of the pipeline (used to locate rules, envs, scripts)
+mem_overhead: Memory safety factor applied to memory-intensive rules. Useful for samtools sort, Picard, and GATK. Example: mem_mb: 8000 → actually requests 9600 MB
 
-ref: Reference genome FASTA
+clean_intermediates: Automatically deletes intermediate files once downstream steps are completed. Helps reduce disk usage
 
-mem_overhead: 1.2
-
-
-Memory safety factor applied to memory-intensive rules
-
-Useful for samtools sort, Picard, and GATK
-
-Example: mem_mb: 8000 → actually requests 9600 MB
-
-clean_intermediates: true
-
-
-Automatically deletes intermediate files once downstream steps are completed
-
-Helps reduce disk usage
-
-✂️ Adapter Removal (AdapterRemoval2)
+## ✂️ Adapter Removal (AdapterRemoval2)
 adapterremoval2:
-  run: True
-  output_dir: adapterremoval2
-  threads: 4
-  options: "--trimns --trimqualities --minlength 30"
-  concatenate: False
-  mem_mb: 2000
-
-
-Uses AdapterRemoval2
-
-Supports:
-
-Adapter trimming
-
-Quality trimming
-
-Read collapsing (optional)
-
-Concatenation of PE reads (optional)
+  run: True or False
+  output_dir: directory to save output
+  threads: number of threads
+  options: additional options
+  concatenate: concatenate collapsed with r1 and r2 that passed filters. True or False
+  mem_mb: memmory to use at this step (in MB)
 
 ⚠️ Important:
 
@@ -67,109 +37,60 @@ If --collapse or concatenate: True is used, proper pairing information is lost
 
 This affects downstream statistics (see stats.count_properly_paired)
 
-🧭 Mapping
+## 🧭 Mapping
 mapping:
-  soft: bwa-aln
-  output_dir: mapping
-  threads: 4
-  params: "-l 1024"
-  reads_group_parser: "_"
-  mapping_mem_mb: 4000
-  indexing_mem_mb: 10000
+  soft: software for mapping. bwa-aln or bwa-mem
+  output_dir: directory to save output
+  threads: number of threads
+  params: additional options
+  reads_group_parser: Read group names are parsed using reads_group_parser. One character or False
+  mapping_mem_mb: memmory to use at this step (in MB)
+  indexing_mem_mb: memmory to use at this step (in MB)
 
-
-Supports BWA (bwa aln by default)
-
-Read group names are parsed using reads_group_parser
-
-Reference indexing and mapping memory can be tuned separately
-
-🔃 Sorting
+##🔃 Sorting
 sorting:
-  threads: 4
-  mem_mb: 16000
+  threads: number of threads
+  mem_mb:  memmory to use at this step (in MB)
 
-
-Coordinate sorting using samtools sort
-
-Memory automatically scaled using mem_overhead
-
-🔁 Circular Genome Mapping (Optional)
+##🔁 Circular Genome Mapping (Optional)
 circular_mapper:
-  run: True
-  output_dir: circular
-  elongation: 500
-  chr: MT
-  mem_mb: 2000
+  run: True or False
+  output_dir: directory to save output
+  elongation: bps to elongate
+  chr: chr to elongate
+  mem_mb: memmory to use at this step (in MB)
 
-
-Designed for circular genomes (e.g. mitochondria)
-
-Artificially elongates reference to recover edge-spanning reads
-
-Typically used for mitochondrial DNA (chr: MT)
-
-🧹 Deduplication
+##🧹 Deduplication
 dedup:
-  output_dir: dedup
-  params: "--REMOVE_DUPLICATES true --VALIDATION_STRINGENCY LENIENT --ASSUME_SORT_ORDER coordinate"
-  mem_mb: 10000
+  output_dir: directory to save output
+  params: additional options
+  mem_mb: memmory to use at this step (in MB)
 
-
-Uses Picard MarkDuplicates
-
-Designed to work with both linear and circular mappings
-
-🔀 Merging Multiple Runs (Optional)
+##🔀 Merging Multiple Runs (Optional)
 merge_same_sample_runs:
-  run: False
-  params: "--VALIDATION_STRINGENCY LENIENT"
-  output_merge_dir: merged
-  output_dedup_dir: merged_dedup
-  output_circular_dir: merged_circular
-  mem_mb: 10000
+  run: True or False
+  params: additional options
+  output_merge_dir: directory to save merged output
+  output_dedup_dir: directory to save merged output after dedup
+  output_circular_dir: if circularmapper, directory to save merged output after dedup and circularmapper
+  mem_mb: memmory to use at merging step (in MB)
 
-
-Merges BAMs from multiple sequencing runs of the same sample
-
-Can be applied before or after deduplication
-
-🧬 Consensus Generation
+##🧬 Consensus Generation
 consensus:
-  run: True
-  soft: samtools
-  chrs: ["MT"]
-  output_dir_prefix: fastas_
-  params: "--min-MQ 30 --min-BQ 30 -d 5"
-  mem_mb: 2000
+  run: True or False
+  soft: software for consensus. htsbox or samtools
+  chrs: chrs to be conensensus called ex ["MT"]
+  output_dir_prefix: prefix directory to save output
+  params: additional options
+  mem_mb: memmory to use at this step (in MB)
 
-
-Generates consensus FASTA sequences
-
-Typically used for mitochondrial or targeted regions
-
-Fully configurable quality thresholds
-
-📊 Basic Statistics
+##📊 Basic Statistics
 stats:
-  output_dir: stats
-  count_properly_paired: True
-  add_chrs: ["MT"]
-  add_beds:
-    MT2: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
-
-
-The statistics module computes:
-
-Total reads
-
-Mapped reads and percentages
-
-MQ30 reads and percentages
-
-Optional properly paired statistics
-
-Optional per-chromosome and per-BED statistics
+  output_dir: directory to save output
+  count_properly_paired: True or False
+  add_chrs: chrs to count statistics. ex ["MT"]
+  add_beds: beds to count statistics (python dictionary or False)
+    Exome: path/to/exome.bed or False
 
 ⚠️ Important constraints:
 
@@ -183,25 +104,18 @@ Reads were not concatenated
 
 The pipeline will fail early if this condition is violated.
 
-📈 Coverage Calculation
+##📈 Coverage Calculation
 coverages:
-  run: True
-  threads: 1
-  output_dir_prefix: coverage_
-  params: "--minMappingQuality 30 --omitDepthOutputAtEachBase"
-  beds:
+  run: True or False
+  threads: number of threads
+  output_dir_prefix: prefix directory to save output
+  params: additional options
+  beds: beds to calculate coverage (python dictionary)
     all: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
     exome: /media/jbod2/eugenio/ref_genomes/myotragus_balearicus_NC_042943.fasta.bed
   mem_mb : 8000
 
-
-Computes depth and coverage statistics
-
-Supports multiple BED regions
-
-Outputs are organized per region
-
-✅ Design Philosophy
+##✅ Design Philosophy
 
 Fail early on invalid configurations
 
