@@ -172,9 +172,9 @@ rule basic_stats:
                 PPPAN_MQ30=$(samtools view -c -f 2 -q 30 -L $BED $BAM)
 
                 echo $PPPAN >> $TMP
-                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo"scale=4; $PPPAN/$MAP" | bc >> $TMP; fi
+                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $PPPAN/$MAP" | bc >> $TMP; fi
                 echo $PPPAN_MQ30 >> $TMP
-                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo"scale=4; $PPPAN_MQ30/$MAP" | bc >> $TMP; fi
+                if [ "$MAP" -eq 0 ]; then echo NA >> $TMP; else echo "scale=4; $PPPAN_MQ30/$MAP" | bc >> $TMP; fi
             fi
 
         done
