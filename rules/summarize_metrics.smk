@@ -6,9 +6,10 @@ rule summarize_run_metrics:
         ),
         coverage = lambda wildcards: (
             expand(
-                config["coverage"]["output_dir"] + "/{seq}.seq_summary",
-                seq=SEQS.keys()
-            ) if config.get("coverage", {}).get("run", False) else []
+            config["coverages"]["output_dir_prefix"] + "{bed}/{seq}.sample_summary",
+            seq=SEQS.keys(),
+            bed=config["coverages"]["beds"].keys()
+            ) if config.get("coverages", {}).get("run", False) else []
         ),
         dups = expand(
             config["dedup"]["output_dir"] + "/{seq}.metrics.txt",

@@ -76,9 +76,10 @@ rule summarize_samples_metrics:
         ),
         coverage = lambda wildcards: (
             expand(
-                config["coverage"]["output_dir"] + "/{sample}.seq_summary",
-                sample=MERGE_SAMPLES
-            ) if config.get("coverage", {}).get("run", False) else []
+            config["coverages"]["output_dir_prefix"] + "{bed}/{sample}.sample_summary",
+            sample=MERGE_SAMPLES,
+            bed=config["coverages"]["beds"].keys()
+            ) if config.get("coverages", {}).get("run", False) else []
         ),
         dups = expand(
             config["merge_same_sample_runs"]["output_dedup_dir"] + "/{sample}.metrics.txt",
@@ -106,18 +107,8 @@ rule summarize_samples_metrics:
         for sample in MERGE_SAMPLES:
             row = {"Sample": sample}
 
-            # --- Basic stats ---
-            basic_file = os.path.join(config["stats"]["output_dir"], f"{sample}_basic_stats.txt")
-            if os.path.exists(basic_file):
-                with open(basic_file) as f:
-                    lines = [line.strip().split() for line in f.readlines()]
-                    if len(lines) >= 2:
-                        for k, v in zip(lines[0], lines[1]):
-                            if not k.startswith("Raw_Reads"):  # skip R1/R2
-                                row[k] = v
-
             # --- Duplicates ---
-            dups_file = os.path.join(config["dedup"]["output_dir"], f"{sample}.metrics.txt")
+            dups_file = os.path.join(config["merge_same_sample_runs"]["output_dedup_dir"], f"{sample}.metrics.txt")
             if os.path.exists(dups_file):
                 with open(dups_file) as f:
                     lines = [l.strip() for l in f if l.strip() != "" and not l.startswith("#")]
@@ -137,10 +128,20 @@ rule summarize_samples_metrics:
                 row["Dups_amount"] = "NA"
                 row["Dups_rate"] = "NA"
 
+            # --- Basic stats ---
+            basic_file = os.path.join(config["stats"]["output_dir"], f"{sample}_basic_stats.txt")
+            if os.path.exists(basic_file):
+                with open(basic_file) as f:
+                    lines = [line.strip().split() for line in f.readlines()]
+                    if len(lines) >= 2:
+                        for k, v in zip(lines[0], lines[1]):
+                            if not k.startswith("Raw_Reads"):  # skip R1/R2
+                                row[k] = v
+
             # --- Coverage metrics ---
-            if config.get("coverage", {}).get("run", False):
-                for bed_name, bed_path in config["coverage"]["beds"].items():
-                    cov_file = os.path.join(config["coverage"]["output_dir"], f"{sample}.seq_summary")
+            if config.get("coverages", {}).get("run", False):
+                for bed_name, bed_path in config["coverages"]["beds"].items():
+                    cov_file = f"{config['coverages']['output_dir_prefix']}{bed_name}/{sample}.sample_summary"
                     colname = f"Mean_coverage_{bed_name}"
                     if os.path.exists(cov_file):
                         with open(cov_file) as f:
@@ -155,18 +156,28 @@ rule summarize_samples_metrics:
             # --- Consensus metrics ---
             if config.get("consensus", {}).get("run", False):
                 for chr_name in config["consensus"]["chrs"]:
-                    missing_file = os.path.join(config["consensus"]["output_dir_prefix"], f"{chr_name}/{sample}.missing.txt")
+                    missing_file = (
+                        config["consensus"]["output_dir_prefix"]
+                        + f"{chr_name}/"
+                        + f"{seq}.missing.txt"
+                    )
+                
                     col_missing = f"Missing_{chr_name}"
+                
                     if os.path.exists(missing_file):
+                
                         with open(missing_file) as f:
-                            lines = [line.strip().split("\t") for line in f if line.strip()]
-                            if len(lines) >= 2 and len(lines[1]) >= 5:
-                                row[col_missing] = lines[1][4]
+                            header = f.readline().strip().split("\t")
+                            values = f.readline().strip().split("\t")
+                
+                            if len(values) >= 5:  # ensure missing_pct is present
+                                missing_pct = values[4]
+                                row[col_missing] = missing_pct
                             else:
                                 row[col_missing] = "NA"
+                
                     else:
                         row[col_missing] = "NA"
-
             all_data.append(row)
 
         df = pd.DataFrame(all_data).fillna("NA")
