@@ -159,7 +159,7 @@ rule summarize_samples_metrics:
                     missing_file = (
                         config["consensus"]["output_dir_prefix"]
                         + f"{chr_name}/"
-                        + f"{seq}.missing.txt"
+                        + f"{sample}.missing.txt"
                     )
                 
                     col_missing = f"Missing_{chr_name}"
